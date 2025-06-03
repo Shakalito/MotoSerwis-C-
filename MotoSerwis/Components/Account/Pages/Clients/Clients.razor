@@ -2,11 +2,18 @@
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
+@using MotoSerwis.Data
+@using MotoSerwis.Data.Entities
+@using Microsoft.EntityFrameworkCore
 @inject NavigationManager Navigation
+@inject ApplicationDbContext DbContext
 
 <h1>Klienci</h1>
 
-<div class="d-flex justify-content-end">
+<div class="d-flex justify-content-between mb-3">
+    <input type="text" class="form-control w-50"
+           placeholder="Szukaj po marce lub modelu..."
+           @oninput="HandleSearchInput" value="@searchTerm" />
     <NavLink class="btn btn-primary" href="Client/Add">Dodaj</NavLink>
 </div>
 
@@ -42,7 +49,8 @@ else
 }
 
 @code {
-    private List<ClientListItem> clients = new List<ClientListItem>();
+    private List<Client> clients = new();
+    private string searchTerm = string.Empty;
 
     private void NavigateToDetails(int id)
     {
@@ -51,42 +59,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // TODO: get from db
-        clients = new List<ClientListItem>
-        {
-            new ClientListItem
-            {
-                Id = 1,
-                FirstName = "Jan",
-                LastName = "Kowalski",
-                Address = "Rzeszów 123",
-                PhoneNumber = "123 321 323"
-            },
-            new ClientListItem
-            {
-                Id = 2,
-                FirstName = "Janusz",
-                LastName = "Kowalski",
-                Address = "Rzeszów 1235",
-                PhoneNumber = "123 321 123"
-            },
-            new ClientListItem
-            {
-                Id = 3,
-                FirstName = "Krzysztof",
-                LastName = "Kowalski",
-                Address = "Rzeszów 1231",
-                PhoneNumber = "123 521 123"
-            },
-            new ClientListItem
-            {
-                Id = 4,
-                FirstName = "Marian",
-                LastName = "Kowalski",
-                Address = "Rzeszów 1232",
-                PhoneNumber = "623 321 123"
-            },
-        };
+        await LoadClientsAsync();
+    }
+
+    private async Task LoadClientsAsync()
+    {
+        clients = await DbContext.Clients
+            .Where(c => c.FirstName.Contains(searchTerm) || c.LastName.Contains(searchTerm))
+            .OrderBy(c => c.LastName)
+            .ToListAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadClientsAsync();
+    }
+
+    private async Task HandleSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        await LoadClientsAsync();
     }
 
     private class ClientListItem

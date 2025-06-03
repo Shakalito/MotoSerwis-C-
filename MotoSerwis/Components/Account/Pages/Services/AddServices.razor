@@ -1,0 +1,153 @@
+﻿@page "/Services/Add"
+@using Microsoft.EntityFrameworkCore
+@using MotoSerwis.Components.Account.Shared.Validators
+@using MotoSerwis.Data
+@using MotoSerwis.Components.Account.Shared.Enums
+@using Microsoft.AspNetCore.Identity
+@using MotoSerwis.Data.Entities
+@using System.ComponentModel.DataAnnotations
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+
+<h3>Dodaj nowe zgłoszenie serwisowe</h3>
+
+<EditForm Model="Input" OnValidSubmit="FormSubmit" Formname="addService">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- Marka i model -->
+    <div class="form-floating mb-3">
+        <InputSelect TValue="int" class="form-select" @bind-Value="Input.ModelId">
+            <option value="">-- wybierz markę i model --</option>
+            @foreach (var model in Models)
+            {
+                <option value="@model.Id">@model.Make.Name - @model.Name</option>
+            }
+        </InputSelect>
+        <label>Marka i model</label>
+    </div>
+
+    <!-- Klient -->
+    <div class="form-floating mb-3">
+        <InputSelect TValue="int" class="form-select" @bind-Value="Input.ClientId">
+            <option value="">-- wybierz klienta --</option>
+            @foreach (var client in Clients)
+            {
+                <option value="@client.Id">@client.FirstName @client.LastName</option>
+            }
+        </InputSelect>
+        <label>Klient</label>
+    </div>
+
+    <!-- Pracownik -->
+    <div class="form-floating mb-3">
+        <InputSelect TValue="string" class="form-select" @bind-Value="Input.UserId">
+            <option value="">-- wybierz pracownika --</option>
+            @foreach (var user in Users)
+            {
+                <option value="@user.Id">@user.FirstName @user.LastName</option>
+            }
+        </InputSelect>
+        <label>Pracownik</label>
+    </div>
+
+    <!-- Rok produkcji -->
+    <div class="form-floating mb-3">
+        <InputNumber class="form-control" @bind-Value="Input.YearOfManufacture" />
+        <label>Rok produkcji</label>
+        <ValidationMessage For="() => Input.YearOfManufacture" />
+    </div>
+
+    <!-- VIN -->
+    <div class="form-floating mb-3">
+        <InputText @bind-Value="Input.Vin" class="form-control" placeholder="1HGCM82633A004352" />
+        <label for="Vin" class="form-label">VIN</label>
+        <ValidationMessage For="() => Input.Vin" class="text-danger" />
+    </div>
+
+    <!-- Opis -->
+    <div class="form-floating mb-3">
+        <InputTextArea class="form-control" @bind-Value="Input.IssueDescription" style="height: 150px;" />
+        <label>Opis problemu</label>
+        <ValidationMessage For="() => Input.IssueDescription" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <div class="alert alert-success mt-3">@SuccessMessage</div>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private ServiceInputModel Input { get; set; } = new();
+    private string? SuccessMessage;
+
+    private List<Model> Models = new();
+    private List<Client> Clients = new();
+    private List<ApplicationUser> Users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Models = await DbContext.Models
+            .Include(m => m.Make)
+            .OrderBy(m => m.Make.Name)
+            .ThenBy(m => m.Name)
+            .ToListAsync();
+        Clients = await DbContext.Clients.OrderBy(c => c.LastName).ToListAsync();
+        Users = await UserManager.Users.OrderBy(u => u.Email).ToListAsync();
+    }
+
+    private async Task FormSubmit()
+    {
+        var selectedModel = await DbContext.Models
+            .Include(m => m.Make)
+            .FirstOrDefaultAsync(m => m.Id == Input.ModelId);
+
+        if (selectedModel is null)
+        {
+            SuccessMessage = "Nieprawidłowy wybór modelu.";
+            return;
+        }
+
+        var service = new Service
+        {
+            MakeId = selectedModel.MakeId,
+            ModelId = selectedModel.Id,
+            ClientId = Input.ClientId,
+            ApplicationUserId = Input.UserId,
+            YearOfManufacture = Input.YearOfManufacture,
+            IssueDescription = Input.IssueDescription,
+            MotorcycleVin = Input.Vin,
+            Status = MotorcycleServiceStatus.Received,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        DbContext.Services.Add(service);
+        await DbContext.SaveChangesAsync();
+
+        SuccessMessage = "Zgłoszenie zostało dodane.";
+        Input = new(); // reset form
+    }
+
+    private class ServiceInputModel
+    {
+        [Required(ErrorMessage = "Model jest wymagany.")]
+        public int ModelId { get; set; }    
+        [Required(ErrorMessage = "Pracownik jest wymagany.")]
+        public string UserId { get; set; }
+        [Required(ErrorMessage = "Klient jest wymagany.")]
+        public int ClientId { get; set; }
+        [Required(ErrorMessage = "Rok produkcji jest wymagany.")]
+        [YearNotInFuture(ErrorMessage = "Rok produkcji nie może być w przyszłości.")]
+        public int YearOfManufacture { get; set; } = DateTime.UtcNow.Year;
+        [Required(ErrorMessage = "Opis problemu jest wymagany.")]
+        [StringLength(1000)]
+        public string IssueDescription { get; set; } = string.Empty;
+        [Required]
+        [RegularExpression("^[A-HJ-NPR-Z0-9]{17}$", ErrorMessage = "VIN zawiera niedozwolone znaki.")]
+        public string Vin { get; set; }
+    }
+}

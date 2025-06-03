@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using MotoSerwis.Components;
 using MotoSerwis.Components.Account;
 using MotoSerwis.Data;
+using MotoSerwis.Data.Seed;
+using System.Globalization;
 
 namespace MotoSerwis
 {
@@ -43,14 +46,14 @@ namespace MotoSerwis
 
             var app = builder.Build();
 
-            // Ensure database is created and migrations are applied
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 db.Database.Migrate();
+
+                DbSeeder.Seed(db);
             }
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -58,7 +61,6 @@ namespace MotoSerwis
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 

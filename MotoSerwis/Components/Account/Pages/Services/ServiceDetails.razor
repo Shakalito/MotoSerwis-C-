@@ -1,0 +1,136 @@
+﻿@page "/Services/Details/{id:int}"
+@using MotoSerwis.Components.Account.Shared.Enums
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Identity
+@using MotoSerwis.Components.Account.Shared.Extensions
+@using MotoSerwis.Data
+@using MotoSerwis.Data.Entities
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthProvider
+
+<h1>Szczegóły serwisu</h1>
+@if (Model == null)
+{
+    <p><em>Ładowanie...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                <h4><b>Marka</b></h4>
+                <p>@Model.Make</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Model</b></h4>
+                <p>@Model.Model</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Rok produkcji</b></h4>
+                <p>@Model.YearOfManufacture</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>VIN</b></h4>
+                <p>@Model.Vin</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Opis problemu</b></h4>
+                <p>@Model.IssueDescription</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Właściciel</b></h4>
+                <p>@Model.OwnerName</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Status serwisowy</b></h4>
+                @if (CanEditStatus)
+                {
+                    <select class="form-select" @bind="selectedStatus">
+                        @foreach (MotorcycleServiceStatus status in Enum.GetValues(typeof(MotorcycleServiceStatus)))
+                        {
+                            <option value="@status">@status.GetDisplayName()</option>
+                        }
+                    </select>
+                    <button class="btn btn-primary mt-2" @onclick="UpdateStatus" type="button">Zmień status</button>
+                }
+                else
+                {
+                    <p>@Model.Status.GetDisplayName()</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private ServiceDetailsModel? Model { get; set; }
+    private MotorcycleServiceStatus selectedStatus;
+
+    private bool CanEditStatus = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var service = await DbContext.Services
+            .Include(s => s.Make)
+            .Include(s => s.Model)
+            .Include(s => s.Client)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (service == null)
+        {
+            return;
+        }
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+
+        CanEditStatus = currentUser != null && service.ApplicationUserId == currentUser.Id;
+
+        selectedStatus = service.Status;
+        Model = new ServiceDetailsModel
+            {
+                Make = service.Make.Name,
+                Model = service.Model.Name,
+                YearOfManufacture = service.YearOfManufacture,
+                IssueDescription = service.IssueDescription,
+                Vin = service.MotorcycleVin,
+                OwnerName = service.Client.FirstName + " " + service.Client.LastName,
+                Status = service.Status
+            };
+    }
+
+    private async Task UpdateStatus()
+    {
+        if (!CanEditStatus)
+            return;
+
+        var service = await DbContext.Services.FirstOrDefaultAsync(s => s.Id == id);
+        if (service != null)
+        {
+            service.Status = selectedStatus;
+            await DbContext.SaveChangesAsync();
+
+            Model.Status = service.Status;
+            StateHasChanged();
+        }
+    }
+
+
+    public class ServiceDetailsModel
+    {
+        public string? Make { get; set; }
+        public string? Model { get; set; }
+        public int YearOfManufacture { get; set; }
+        public string? IssueDescription { get; set; }
+        public string? Vin { get; set; }
+        public string? OwnerName { get; set; }
+        public MotorcycleServiceStatus Status { get; set; }
+    }
+}

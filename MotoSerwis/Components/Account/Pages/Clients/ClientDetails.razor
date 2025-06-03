@@ -1,7 +1,14 @@
 ﻿@page "/Client/Details/{id:int}"
 @attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using MotoSerwis.Data
+@using MotoSerwis.Data.Entities
+@inject ApplicationDbContext DbContext
 
 <h1>Klient</h1>
+
 @if (Model == null)
 {
     <p><em>Ładowanie...</em></p>
@@ -11,7 +18,7 @@ else
     <div class="row">
         <div class="col-md-4">
             <div class="form-floating mb-3">
-                <h4><b>Imię i Naziwsko</b></h4>
+                <h4><b>Imię i Nazwisko</b></h4>
                 <p>@Model.FirstName @Model.LastName</p>
             </div>
             <div class="form-floating mb-3">
@@ -24,6 +31,37 @@ else
             </div>
         </div>
     </div>
+
+    <h3 class="mt-4">Wykonane serwisy</h3>
+
+    @if (Model.Services.Any())
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Data zgłoszenia</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var service in Model.Services)
+                {
+                    <tr>
+                        <td>@service.Make</td>
+                        <td>@service.Model</td>
+                        <td>@service.IssuedAt</td>
+                        <td>@service.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p><em>Brak serwisów przypisanych do klienta.</em></p>
+    }
 }
 
 @code {
@@ -34,14 +72,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // TODO: get from db
-        Model = new ClientDetailsModel()
+        var client = await DbContext.Clients
+            .Include(c => c.Services)
+                .ThenInclude(s => s.Make)
+            .Include(c => c.Services)
+                .ThenInclude(s => s.Model)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (client == null)
+        {
+            Model = null;
+            return;
+        }
+
+        Model = new ClientDetailsModel
             {
-                Id = 1,
-                FirstName = "Jan",
-                LastName = "Kowalski",
-                Address = "Rzeszów 123",
-                PhoneNumber = "123 321 123"
+                Id = client.Id,
+                FirstName = client.FirstName,
+                LastName = client.LastName,
+                Address = client.Address,
+                PhoneNumber = client.PhoneNumber,
+                Services = client.Services.Select(s => new ServiceInfo
+                {
+                    Make = s.Make.Name,
+                    Model = s.Model.Name,
+                    IssuedAt = s.CreatedAt.ToString(),
+                    Status = s.Status.ToString()
+                }).ToList()
             };
     }
 
@@ -52,5 +109,14 @@ else
         public string? LastName { get; set; }
         public string? Address { get; set; }
         public string? PhoneNumber { get; set; }
+        public List<ServiceInfo> Services { get; set; } = new();
+    }
+
+    private class ServiceInfo
+    {
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public string IssuedAt { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
     }
 }

@@ -1,7 +1,118 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using MotoSerwis.Data
+@using MotoSerwis.Data.Entities
+@using MotoSerwis.Components.Account.Shared.Extensions
+@inject AuthenticationStateProvider AuthProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
 
-<h1>Serwis motocyklowy</h1>
+@attribute [StreamRendering]
+@rendermode InteractiveServer
 
-Panel zarządzania
+<PageTitle>Serwis motocyklowy</PageTitle>
+
+<h1 class="mt-4">Panel zarządzania</h1>
+
+<AuthorizeView>
+    <Authorized>
+        @if (services == null)
+        {
+            <p><em>Ładowanie serwisów...</em></p>
+        }
+        else if (!services.Any())
+        {
+            <div class="alert alert-info mt-3">
+                Nie masz jeszcze żadnych przypisanych serwisów.
+            </div>
+        }
+        else
+        {
+            <h4 class="mt-4">Twoje serwisy</h4>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Marka</th>
+                        <th>Model</th>
+                        <th>Rok produkcji</th>
+                        <th>Właściciel</th>
+                        <th>Adres</th>
+                        <th>Numer telefonu</th>
+                        <th>Status serwisowy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in services)
+                    {
+                        <tr style="cursor: pointer;" @onclick="@(() => NavigateToDetails(s.Id))">
+                            <td>@s.Make</td>
+                            <td>@s.Model</td>
+                            <td>@s.Year</td>
+                            <td>@s.OwnerName</td>
+                            <td>@s.OwnerAddress</td>
+                            <td>@s.OwnerPhoneNumber</td>
+                            <td>@s.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-warning mt-4">
+            <strong>Zaloguj się</strong>, aby zobaczyć przypisane serwisy.
+        </div>
+        <a class="btn btn-primary" href="Account/Login">Przejdź do logowania</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ServiceSummary> services;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+
+        if (user != null)
+        {
+            services = await DbContext.Services
+                .Include(s => s.Make)
+                .Include(s => s.Model)
+                .Where(s => s.ApplicationUserId == user.Id)
+                .Select(s => new ServiceSummary
+                    {
+                        Id = s.Id,
+                        Make = s.Make.Name,
+                        Model = s.Model.Name,
+                        OwnerName = s.Client.FirstName + " " + s.Client.LastName,
+                        OwnerAddress = s.Client.Address,
+                        OwnerPhoneNumber = s.Client.PhoneNumber,
+                        Year = s.YearOfManufacture.ToString(),
+                        Status = s.Status.GetDisplayName()
+                    })
+                .ToListAsync();
+        }
+    }
+
+    private void NavigateToDetails(int serviceId)
+    {
+        Navigation.NavigateTo($"/Services/Details/{serviceId}");
+    }
+
+    private class ServiceSummary
+    {
+        public int Id { get; set; }
+        public string Make { get; set; }
+        public string Model { get; set; }
+        public string Year { get; set; }
+        public string Status { get; set; }
+        public string OwnerName { get; set; }
+        public string OwnerAddress { get; set; }
+        public string OwnerPhoneNumber { get; set; }
+    }
+}

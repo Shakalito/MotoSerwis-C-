@@ -1,0 +1,123 @@
+﻿@page "/Services"
+@using MotoSerwis.Components.Account.Shared.Enums
+@using MotoSerwis.Components.Account.Shared.Extensions
+@using Microsoft.EntityFrameworkCore
+@using MotoSerwis.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<h1>Zgłoszenia serwisowe</h1>
+
+<PageTitle>Lista serwisów</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <input type="text" class="form-control w-50"
+           placeholder="Szukaj po marce lub modelu..."
+           @oninput="HandleSearchInput" value="@searchTerm" />
+           <NavLink class="btn btn-primary" href="Services/Add">Dodaj</NavLink>
+</div>
+
+@if (services == null)
+{
+    <p><em>Ładowanie...</em></p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Marka</th>
+                <th>Model</th>
+                <th>Rok produkcji</th>
+                <th>Właściciel</th>
+                <th>Adres</th>
+                <th>Numer telefonu</th>
+                <th>Pracownik</th>
+                <th>Status serwisowy</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr style="cursor: pointer;" @onclick="@(() => NavigateToDetails(service.Id))">
+                    <td>@service.Id</td>
+                    <td>@service.Make</td>
+                    <td>@service.Model</td>
+                    <td>@service.YearOfManufacture</td>
+                    <td>@service.OwnerName</td>
+                    <td>@service.OwnerAddress</td>
+                    <td>@service.OwnerPhoneNumber</td>
+                    <td>@service.EmployeeName</td>
+                    <td>@service.Status.GetDisplayName()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ServiceListItem> services = new();
+    private string searchTerm = string.Empty;
+
+    private void NavigateToDetails(int id)
+    {
+        Navigation.NavigateTo($"/Services/Details/{id}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadServicesAsync();
+    }
+
+    private async Task HandleSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        await LoadServicesAsync();
+    }
+
+    private async Task LoadServicesAsync()
+    {
+        services = await DbContext.Services
+            .Include(s => s.Make)
+            .Include(s => s.Model)
+            .Include(s => s.Client)
+            .Select(s => new ServiceListItem
+            {
+                Id = s.Id,
+                Make = s.Make.Name,
+                Model = s.Model.Name,
+                YearOfManufacture = s.YearOfManufacture.ToString(),
+                OwnerName = s.Client.FirstName + " " + s.Client.LastName,
+                OwnerAddress = s.Client.Address,
+                OwnerPhoneNumber = s.Client.PhoneNumber,
+                EmployeeName = $"{s.ApplicationUser.FirstName} {s.ApplicationUser.LastName}",
+                Status = s.Status
+            })
+            .Where(s => string.IsNullOrEmpty(searchTerm) || 
+                        s.Make.Contains(searchTerm) ||
+                        s.Model.Contains(searchTerm))
+            .ToListAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadServicesAsync();
+    }
+
+    private class ServiceListItem
+    {
+        public int Id { get; set; }
+        public string Make { get; set; }
+        public string Model { get; set; }
+        public string YearOfManufacture { get; set; }
+        public string OwnerName { get; set; }
+        public string OwnerAddress { get; set; }
+        public string OwnerPhoneNumber { get; set; }
+        public string EmployeeName { get; set; }
+        public MotorcycleServiceStatus Status { get; set; }
+    }
+}
