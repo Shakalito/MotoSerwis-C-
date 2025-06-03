@@ -1,0 +1,100 @@
+﻿@page "/Clients"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@inject NavigationManager Navigation
+
+<h1>Klienci</h1>
+
+<div class="d-flex justify-content-end">
+    <NavLink class="btn btn-primary" href="Client/Add">Dodaj</NavLink>
+</div>
+
+@if (clients == null)
+{
+    <p><em>Ładowanie...</em></p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Adres</th>
+                <th>Numer telefonu</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var client in clients)
+            {
+                <tr style="cursor: pointer;" @onclick="@(() => NavigateToDetails(client.Id))">
+                    <td>@client.Id</td>
+                    <td>@client.FirstName</td>
+                    <td>@client.LastName</td>
+                    <td>@client.Address</td>
+                    <td>@client.PhoneNumber</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ClientListItem> clients = new List<ClientListItem>();
+
+    private void NavigateToDetails(int id)
+    {
+        Navigation.NavigateTo($"/Client/Details/{id}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: get from db
+        clients = new List<ClientListItem>
+        {
+            new ClientListItem
+            {
+                Id = 1,
+                FirstName = "Jan",
+                LastName = "Kowalski",
+                Address = "Rzeszów 123",
+                PhoneNumber = "123 321 323"
+            },
+            new ClientListItem
+            {
+                Id = 2,
+                FirstName = "Janusz",
+                LastName = "Kowalski",
+                Address = "Rzeszów 1235",
+                PhoneNumber = "123 321 123"
+            },
+            new ClientListItem
+            {
+                Id = 3,
+                FirstName = "Krzysztof",
+                LastName = "Kowalski",
+                Address = "Rzeszów 1231",
+                PhoneNumber = "123 521 123"
+            },
+            new ClientListItem
+            {
+                Id = 4,
+                FirstName = "Marian",
+                LastName = "Kowalski",
+                Address = "Rzeszów 1232",
+                PhoneNumber = "623 321 123"
+            },
+        };
+    }
+
+    private class ClientListItem
+    {
+        public int Id { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Address { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+}

@@ -1,0 +1,56 @@
+﻿@page "/Client/Details/{id:int}"
+@attribute [StreamRendering]
+
+<h1>Klient</h1>
+@if (Model == null)
+{
+    <p><em>Ładowanie...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-floating mb-3">
+                <h4><b>Imię i Naziwsko</b></h4>
+                <p>@Model.FirstName @Model.LastName</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Adres</b></h4>
+                <p>@Model.Address</p>
+            </div>
+            <div class="form-floating mb-3">
+                <h4><b>Numer telefonu</b></h4>
+                <p>@Model.PhoneNumber</p>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ClientDetailsModel? Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: get from db
+        Model = new ClientDetailsModel()
+            {
+                Id = 1,
+                FirstName = "Jan",
+                LastName = "Kowalski",
+                Address = "Rzeszów 123",
+                PhoneNumber = "123 321 123"
+            };
+    }
+
+    private class ClientDetailsModel
+    {
+        public int Id { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Address { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+}
