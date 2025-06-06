@@ -1,10 +1,12 @@
 ﻿@page "/Clients"
+@attribute [Authorize]
 @attribute [StreamRendering]
 @rendermode InteractiveServer
 
 @using MotoSerwis.Data
 @using MotoSerwis.Data.Entities
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
 
@@ -12,7 +14,7 @@
 
 <div class="d-flex justify-content-between mb-3">
     <input type="text" class="form-control w-50"
-           placeholder="Szukaj po marce lub modelu..."
+           placeholder="Szukaj po imieniu lub nazwisku..."
            @oninput="HandleSearchInput" value="@searchTerm" />
     <NavLink class="btn btn-primary" href="Client/Add">Dodaj</NavLink>
 </div>
@@ -61,14 +63,16 @@ else
     {
         await LoadClientsAsync();
     }
-
+    //22
     private async Task LoadClientsAsync()
     {
         clients = await DbContext.Clients
+            .Include(c => c.Services)
             .Where(c => c.FirstName.Contains(searchTerm) || c.LastName.Contains(searchTerm))
             .OrderBy(c => c.LastName)
             .ToListAsync();
     }
+
 
     protected override async Task OnParametersSetAsync()
     {

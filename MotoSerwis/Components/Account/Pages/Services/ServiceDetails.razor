@@ -1,9 +1,11 @@
 ﻿@page "/Services/Details/{id:int}"
 @using MotoSerwis.Components.Account.Shared.Enums
 @attribute [StreamRendering]
+@attribute [Authorize]
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
 @using MotoSerwis.Components.Account.Shared.Extensions
 @using MotoSerwis.Data
 @using MotoSerwis.Data.Entities
@@ -48,6 +50,12 @@ else
             </div>
             <div class="form-floating mb-3">
                 <h4><b>Status serwisowy</b></h4>
+
+                @if (!string.IsNullOrEmpty(statusUpdateMessage))
+                {
+                    <div class="alert alert-success" role="alert">@statusUpdateMessage</div>
+                }
+
                 @if (CanEditStatus)
                 {
                     <select class="form-select" @bind="selectedStatus">
@@ -72,9 +80,11 @@ else
     public int id { get; set; }
     private ServiceDetailsModel? Model { get; set; }
     private MotorcycleServiceStatus selectedStatus;
+    private string? statusUpdateMessage;
+
 
     private bool CanEditStatus = false;
-
+    //22
     protected override async Task OnInitializedAsync()
     {
         var service = await DbContext.Services
@@ -117,8 +127,15 @@ else
             service.Status = selectedStatus;
             await DbContext.SaveChangesAsync();
 
-            Model.Status = service.Status;
-            StateHasChanged();
+            statusUpdateMessage = "Status serwisowy został pomyślnie zmieniony.";
+            StateHasChanged(); 
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000); 
+                statusUpdateMessage = null;
+            });
+
         }
     }
 

@@ -17,14 +17,14 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
+<h1>Rejestracja</h1>
 
 <div class="row">
     <div class="col-md-4">
         <StatusMessage Message="@Message" />
         <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
             <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
+            <h2>Stwórz nowe konto.</h2>
             <hr />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
@@ -115,18 +115,19 @@
 
     private sealed class InputModel
     {
-        [Required]
+        [Required(ErrorMessage = "Pole imię jest wymagane.")]
         [Display(Name = "Imię")]
         public string FirstName { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "Pole nazwisko jest wymagane.")]
         [Display(Name = "Nazwisko")]
         public string LastName { get; set; } = "";
 
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
+        [Required(ErrorMessage = "Pole e-mail jest wymagane.")]
+        [EmailAddress(ErrorMessage = "Podaj poprawny adres e-mail.")]
+        [Display(Name = "E-mail")]
         public string Email { get; set; } = "";
+
 
         [Required]
         [StringLength(100, ErrorMessage = "Hasło {0} musi mieć minimum {2} i maksimum {1} znaków.", MinimumLength = 6)]

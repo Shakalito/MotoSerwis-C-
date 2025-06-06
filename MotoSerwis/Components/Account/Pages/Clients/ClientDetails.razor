@@ -1,7 +1,9 @@
 ﻿@page "/Client/Details/{id:int}"
 @attribute [StreamRendering]
+@attribute [Authorize]
 @rendermode InteractiveServer
 
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using MotoSerwis.Data
 @using MotoSerwis.Data.Entities

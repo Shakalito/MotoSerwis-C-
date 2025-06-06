@@ -12,7 +12,16 @@ namespace MotoSerwis.Data.Seed
                 {
                     new Client() { FirstName = "Jan", LastName = "Kowalski", PhoneNumber = "123323123", Address = "Rzeszów, Kopisto 1" },
                     new Client() { FirstName = "Mariusz", LastName = "Testowy", PhoneNumber = "321123412", Address = "Lublin, Powstańców 2" },
-                    new Client() { FirstName = "Adam", LastName = "Nowak", PhoneNumber = "512123542", Address = "Kraków, Rynek 3" }
+                    new Client() { FirstName = "Adam", LastName = "Nowak", PhoneNumber = "512123542", Address = "Kraków, Rynek 3" },
+                    new Client() { FirstName = "Ewa", LastName = "Zielińska", PhoneNumber = "789456123", Address = "Warszawa, Marszałkowska 10" },
+                    new Client() { FirstName = "Piotr", LastName = "Wiśniewski", PhoneNumber = "654789321", Address = "Poznań, Główna 5" },
+                    new Client() { FirstName = "Anna", LastName = "Dąbrowska", PhoneNumber = "987321654", Address = "Wrocław, Świdnicka 7" },
+                    new Client() { FirstName = "Tomasz", LastName = "Kaczmarek", PhoneNumber = "456987123", Address = "Szczecin, Jasne Błonia 4" },
+                    new Client() { FirstName = "Magdalena", LastName = "Kubiak", PhoneNumber = "321654987", Address = "Gdańsk, Długa 9" },
+                    new Client() { FirstName = "Robert", LastName = "Lewicki", PhoneNumber = "741852963", Address = "Katowice, Mickiewicza 11" },
+                    new Client() { FirstName = "Karolina", LastName = "Mazur", PhoneNumber = "369258147", Address = "Białystok, Sienkiewicza 6" }
+
+
                 };
                 context.Clients.AddRange(clients);
 
@@ -85,6 +94,14 @@ namespace MotoSerwis.Data.Seed
                     new() { Name = "1290 Super Duke R" },
                     new() { Name = "790 Adventure" },
                     new() { Name = "450 EXC-F" }
+                }},
+                new Make { Name = "CFMOTO", Models = new List<Model>
+                {
+                    new() { Name = "300NK" },
+                    new() { Name = "650MT" },
+                    new() { Name = "800MT Touring" },
+                    new() { Name = "700CL-X Heritage" },
+                    new() { Name = "650GT" }
                 }},
                 new Make { Name = "Triumph", Models = new List<Model>
                 {

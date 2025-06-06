@@ -3,10 +3,12 @@
 @using MotoSerwis.Components.Account.Shared.Extensions
 @using Microsoft.EntityFrameworkCore
 @using MotoSerwis.Data
+@using Microsoft.AspNetCore.Authorization
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 
 @attribute [StreamRendering]
+@attribute [Authorize]
 @rendermode InteractiveServer
 
 <h1>Zgłoszenia serwisowe</h1>
@@ -17,7 +19,7 @@
     <input type="text" class="form-control w-50"
            placeholder="Szukaj po marce lub modelu..."
            @oninput="HandleSearchInput" value="@searchTerm" />
-           <NavLink class="btn btn-primary" href="Services/Add">Dodaj</NavLink>
+           <NavLink class="btn btn-primary" href="Services/Add">Dodaj serwis</NavLink>
 </div>
 
 @if (services == null)

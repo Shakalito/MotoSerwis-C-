@@ -77,7 +77,8 @@
         public string Address { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Numer telefonu jest wymagany")]
-        [Phone(ErrorMessage = "Nieprawidłowy numer telefonu")]
+        [RegularExpression(@"^\d{9}$", ErrorMessage = "Numer telefonu musi zawierać dokładnie 9 cyfr.")]
         public string PhoneNumber { get; set; } = string.Empty;
+
     }
 }

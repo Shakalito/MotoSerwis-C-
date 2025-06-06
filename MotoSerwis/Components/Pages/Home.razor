@@ -6,7 +6,7 @@
 @using MotoSerwis.Data
 @using MotoSerwis.Data.Entities
 @using MotoSerwis.Components.Account.Shared.Extensions
-@inject AuthenticationStateProvider AuthProvider
+@inject AuthenticationStateProvider AuthProvider 
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
@@ -84,7 +84,7 @@
                 .Include(s => s.Make)
                 .Include(s => s.Model)
                 .Where(s => s.ApplicationUserId == user.Id)
-                .Select(s => new ServiceSummary
+                .Select(s => new ServiceSummary //Data Transfer Object -> klasa pomocnicza zawierajaca tylko te dane majace pojawic sie wtabeli
                     {
                         Id = s.Id,
                         Make = s.Make.Name,
